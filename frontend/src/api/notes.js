@@ -16,7 +16,7 @@ const config = () => {
       headers: { Authorization: `Bearer ${getToken()}` }
     };
   } catch (error) {
-    throw new Error('Authentication required');
+    throw new Error('Authentication required', error.message);
   }
 };
 
@@ -29,11 +29,22 @@ export const getNotes = async () => {
   }
 };
 
-export const createNote = async (noteData) => {
+export const createNote = async (formData) => {
   try {
-    const res = await axios.post(API_URL, noteData, config());
+    console.log('API createNote called with:', formData); // Debug log
+    
+    const res = await axios.post(API_URL, formData, {
+      ...config(),
+      headers: {
+        ...config().headers,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    console.log('API response:', res.data); // Debug log
     return res.data;
   } catch (error) {
+    console.error('API error:', error); // Debug log
     if (error.response?.status === 401) {
       localStorage.removeItem('token'); // Clear invalid token
       window.location.href = '/login'; // Redirect to login

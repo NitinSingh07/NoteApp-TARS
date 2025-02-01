@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
+import Recorder from './Recorder';
 
 const NoteModal = ({ isOpen, onClose, onSubmit, note }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
       setImageUrl(note.imageUrl || "");
+      setAudioBlob(note.audioBlob || null);
     } else {
       setTitle("");
       setContent("");
       setImageUrl("");
+      setAudioBlob(null);
     }
   }, [note]);
 
@@ -29,14 +33,20 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note }) => {
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ 
-        title: title.trim(), 
-        content: content.trim(), 
-        imageUrl: imageUrl.trim() 
-      });
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('content', content.trim());
+      if (imageUrl) formData.append('imageUrl', imageUrl.trim());
+      if (audioBlob) formData.append('audio', audioBlob, 'recording.wav');
+
+      console.log('Form data being sent:', Object.fromEntries(formData.entries())); // Debug log
+      await onSubmit(formData);
+      
+      // Reset form
       setTitle("");
       setContent("");
       setImageUrl("");
+      setAudioBlob(null);
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -78,6 +88,11 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note }) => {
             className="w-full p-2 border rounded mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isSubmitting}
           />
+          <div className="mb-4">
+            <Recorder
+              onRecordingComplete={setAudioBlob}
+            />
+          </div>
           <div className="flex justify-end space-x-2">
             <button
               type="button"

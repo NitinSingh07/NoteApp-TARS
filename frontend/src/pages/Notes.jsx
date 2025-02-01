@@ -32,20 +32,25 @@ const Notes = () => {
     }
   };
 
-  const handleSubmit = async (noteData) => {
+  const handleSubmit = async (formData) => {
     try {
       setLoading(true);
       if (editingNote) {
+        const noteData = Object.fromEntries(formData.entries());
         await updateNote(editingNote._id, noteData);
         toast.success('Note updated successfully');
       } else {
-        const result = await createNote(noteData);
+        const result = await createNote(formData);
+        console.log('Created note:', result); // Debug log
         if (result) {
           toast.success('Note created successfully');
+          // Immediately update notes array with new note
+          setNotes(prevNotes => [result, ...prevNotes]);
         }
       }
       setIsModalOpen(false);
       setEditingNote(null);
+      // Fetch fresh data from server
       await fetchNotes();
     } catch (error) {
       toast.error(error.message || 'Error saving note');

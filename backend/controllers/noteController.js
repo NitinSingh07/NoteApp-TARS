@@ -3,14 +3,28 @@ import Note from "../models/note.js";
 export const createNote = async (req, res) => {
   try {
     const { title, content, imageUrl } = req.body;
+    let audioUrl = '';
+
+    if (req.files && req.files.audio) {
+      const audioFile = req.files.audio;
+      const filename = `${Date.now()}-${audioFile.name}`;
+      await audioFile.mv(`public/uploads/${filename}`);
+      // Update the audioUrl to include the full server URL
+      audioUrl = `http://localhost:5000/uploads/${filename}`;
+    }
+
     const note = await Note.create({ 
       userId: req.user.id, 
       title, 
       content,
-      imageUrl 
+      imageUrl,
+      audioUrl
     });
+
+    console.log('Created note with audio:', note); // Debug log
     res.status(201).json(note);
   } catch (error) {
+    console.error('Error creating note:', error);
     res.status(400).json({ message: error.message });
   }
 };
