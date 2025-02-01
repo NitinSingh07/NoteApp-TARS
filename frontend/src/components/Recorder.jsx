@@ -5,15 +5,35 @@ const Recorder = ({ onRecordingComplete }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [transcript, setTranscript] = useState("");
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioPlayerRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
+
+      // Initialize speech recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        
+        recognitionRef.current.onresult = (event) => {
+          const currentTranscript = Array.from(event.results)
+            .map(result => result[0])
+            .map(result => result.transcript)
+            .join('');
+          setTranscript(currentTranscript);
+        };
+
+        recognitionRef.current.start();
+      }
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
@@ -24,7 +44,10 @@ const Recorder = ({ onRecordingComplete }) => {
           type: "audio/wav",
         });
         setAudioBlob(audioBlob);
-        onRecordingComplete(audioBlob);
+        onRecordingComplete(audioBlob, transcript);
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
       };
 
       mediaRecorderRef.current.start();
@@ -48,6 +71,9 @@ const Recorder = ({ onRecordingComplete }) => {
         .getTracks()
         .forEach((track) => track.stop());
       setIsRecording(false);
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
   };
 
