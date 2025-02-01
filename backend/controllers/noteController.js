@@ -3,7 +3,7 @@ import Note from "../models/note.js";
 export const createNote = async (req, res) => {
   try {
     const { title, content, imageUrl } = req.body;
-    let audioUrl = '';
+    let audioUrl = "";
 
     if (req.files && req.files.audio) {
       const audioFile = req.files.audio;
@@ -13,26 +13,27 @@ export const createNote = async (req, res) => {
       audioUrl = `http://localhost:5000/uploads/${filename}`;
     }
 
-    const note = await Note.create({ 
-      userId: req.user.id, 
-      title, 
+    const note = await Note.create({
+      userId: req.user.id,
+      title,
       content,
       imageUrl,
-      audioUrl
+      audioUrl,
     });
 
-    console.log('Created note with audio:', note); // Debug log
+    // console.log('Created note with audio:', note); // Debug log
     res.status(201).json(note);
   } catch (error) {
-    console.error('Error creating note:', error);
+    console.error("Error creating note:", error);
     res.status(400).json({ message: error.message });
   }
 };
 
 export const getNotes = async (req, res) => {
   try {
-    const notes = await Note.find({ userId: req.user.id })
-      .sort({ createdAt: -1 });
+    const notes = await Note.find({ userId: req.user.id }).sort({
+      createdAt: -1,
+    });
     res.json(notes);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -55,9 +56,9 @@ export const updateNote = async (req, res) => {
 
 export const deleteNote = async (req, res) => {
   try {
-    const note = await Note.findOneAndDelete({ 
-      _id: req.params.id, 
-      userId: req.user.id 
+    const note = await Note.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id,
     });
     if (!note) return res.status(404).json({ message: "Note not found" });
     res.json({ message: "Note deleted" });
