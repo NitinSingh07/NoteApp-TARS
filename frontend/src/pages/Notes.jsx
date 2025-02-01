@@ -35,26 +35,26 @@ const Notes = ({ showFavoritesOnly = false }) => {
   const handleSubmit = async (formData) => {
     try {
       setLoading(true);
+      let result;
+      
       if (editingNote) {
-        const noteData = Object.fromEntries(formData.entries());
-        await updateNote(editingNote._id, noteData);
-        toast.success('Note updated successfully');
+        console.log('Updating note:', editingNote._id); // Debug log
+        // Don't append noteId to formData
+        result = await updateNote(editingNote._id, formData);
       } else {
-        const result = await createNote(formData);
-        console.log('Created note:', result); // Debug log
-        if (result) {
-          toast.success('Note created successfully');
-          // Immediately update notes array with new note
-          setNotes(prevNotes => [result, ...prevNotes]);
-        }
+        result = await createNote(formData);
       }
-      setIsModalOpen(false);
-      setEditingNote(null);
-      // Fetch fresh data from server
-      await fetchNotes();
+  
+      if (result) {
+        await fetchNotes(); // Refresh notes to get the latest data
+        setIsModalOpen(false);
+        setEditingNote(null);
+        return result; // Return result for the modal to handle
+      }
     } catch (error) {
-      toast.error(error.message || 'Error saving note');
       console.error('Note operation error:', error);
+      toast.error(error.message || 'Failed to save note');
+      throw error; // Let the modal handle the error
     } finally {
       setLoading(false);
     }

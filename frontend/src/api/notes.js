@@ -54,18 +54,24 @@ export const createNote = async (formData) => {
   }
 };
 
-export const updateNote = async (id, noteData) => {
+export const updateNote = async (id, formData) => {
   try {
-    const res = await axios.put(
-      `${API_URL}/${id}`,
-      noteData,
-      config()
-    );
+    // Fix the URL (remove duplicate 'notes')
+    const res = await axios.put(`${API_URL}/${id}`, formData, {
+      ...config(),
+      headers: {
+        ...config().headers,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    console.log('Update response:', res.data); // Debug log
     return res.data;
   } catch (error) {
+    console.error('Update error:', error.response || error);
     if (error.response?.status === 401) {
-      localStorage.removeItem('token'); // Clear invalid token
-      window.location.href = '/login'; // Redirect to login
+      localStorage.removeItem('token');
+      window.location.href = '/login';
       throw new Error('Please login again');
     }
     throw new Error(error.response?.data?.message || 'Failed to update note');

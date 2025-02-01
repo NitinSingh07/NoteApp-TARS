@@ -61,7 +61,7 @@ export const createNote = async (req, res) => {
       transcription: transcription || ""
     });
 
-    console.log('Created note:', note);
+    // console.log('Created note:', note);
     res.status(201).json(note);
   } catch (error) {
     console.error('Error creating note:', error);
@@ -82,14 +82,68 @@ export const getNotes = async (req, res) => {
 
 export const updateNote = async (req, res) => {
   try {
+    const { id } = req.params;
+    let updateData = {};
+
+    // Extract basic fields
+    updateData.title = req.body.title;
+    updateData.content = req.body.content;
+    updateData.transcription = req.body.transcription || "";
+
+    console.log('Update request:', {
+      body: req.body,
+      files: req.files,
+      params: req.params
+    });
+
+    // Handle image upload/update
+    if (req.files?.image) {
+      const imageFile = req.files.image;
+      console.log('Processing updated image:', imageFile.name);
+
+      const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!allowedImageTypes.includes(imageFile.mimetype)) {
+        throw new Error('Invalid image type');
+      }
+
+      const imageFilename = `${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+      const imageUploadPath = path.join('public', 'uploads', 'images', imageFilename);
+      
+      await imageFile.mv(imageUploadPath);
+      updateData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/images/${imageFilename}`;
+    } else if (req.body.imageUrl) {
+      updateData.imageUrl = req.body.imageUrl;
+    }
+
+    // Handle audio upload/update
+    if (req.files?.audio) {
+      const audioFile = req.files.audio;
+      console.log('Processing updated audio:', audioFile.name);
+
+      const audioFilename = `${Date.now()}-${audioFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+      const audioUploadPath = path.join('public', 'uploads', 'audio', audioFilename);
+      
+      await audioFile.mv(audioUploadPath);
+      updateData.audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${audioFilename}`;
+    } else if (req.body.audioUrl) {
+      updateData.audioUrl = req.body.audioUrl;
+    }
+
+    console.log('Update data:', updateData);
+
     const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user.id },
-      req.body,
+      { _id: id, userId: req.user.id },
+      updateData,
       { new: true }
     );
-    if (!note) return res.status(404).json({ message: "Note not found" });
+
+    if (!note) {
+      throw new Error('Note not found');
+    }
+
     res.json(note);
   } catch (error) {
+    console.error('Update error:', error);
     res.status(400).json({ message: error.message });
   }
 };

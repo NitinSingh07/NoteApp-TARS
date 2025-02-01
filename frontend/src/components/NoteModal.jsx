@@ -21,16 +21,18 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
 
   useEffect(() => {
     if (note) {
-      setTitle(note.title);
-      setContent(note.content);
+      setTitle(note.title || "");
+      setContent(note.content || "");
       setPreviewUrl(note.imageUrl || "");
-      setAudioBlob(note.audioBlob || null);
+      setTranscription(note.transcription || "");
+      // Don't reset selectedImage and audioBlob when editing
     } else {
       setTitle("");
       setContent("");
       setPreviewUrl("");
       setSelectedImage(null);
       setAudioBlob(null);
+      setTranscription("");
     }
   }, [note]);
 
@@ -75,6 +77,14 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
     }
   };
 
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setPreviewUrl("");
+    if (note?.imageUrl) {
+      formData.append("removeImage", "true");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -86,21 +96,21 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      
+
       // Add basic fields
       formData.append("title", title.trim());
       formData.append("content", content.trim());
       formData.append("transcription", transcription || "");
 
-      // Handle image file
+      // Handle image
       if (selectedImage) {
-        console.log('Appending image:', selectedImage.name, selectedImage.type);
+        console.log('Appending image:', selectedImage.name);
         formData.append("image", selectedImage);
       }
-      
-      // Handle audio file
+
+      // Handle audio
       if (audioBlob) {
-        console.log('Appending audio blob:', audioBlob.size, audioBlob.type);
+        console.log('Appending audio');
         const audioFile = new File([audioBlob], 'recording.webm', {
           type: 'audio/webm',
           lastModified: Date.now()
@@ -108,14 +118,16 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
         formData.append("audio", audioFile);
       }
 
-      // Debug log the FormData contents
-      for (let [key, value] of formData.entries()) {
-        console.log('FormData entry:', key, value instanceof File ? `File: ${value.name}` : value);
+      // Keep existing URLs if no new files are selected
+      if (!selectedImage && note?.imageUrl) {
+        formData.append("imageUrl", note.imageUrl);
+      }
+      if (!audioBlob && note?.audioUrl) {
+        formData.append("audioUrl", note.audioUrl);
       }
 
       const result = await onSubmit(formData);
-      console.log('Submit result:', result);
-
+      
       if (result) {
         toast.success(note ? 'Note updated successfully' : 'Note created successfully');
         onClose();
@@ -270,19 +282,16 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
                         />
                       </label>
                     </div>
-                    {previewUrl && (
+                    {(previewUrl || note?.imageUrl) && (
                       <div className="relative">
                         <img
-                          src={previewUrl}
+                          src={previewUrl || note.imageUrl}
                           alt="Preview"
                           className="w-full h-48 object-cover rounded-lg"
                         />
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedImage(null);
-                            setPreviewUrl("");
-                          }}
+                          onClick={handleRemoveImage}
                           className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                         >
                           <FaTimes size={14} />
