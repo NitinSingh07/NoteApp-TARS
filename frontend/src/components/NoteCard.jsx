@@ -19,6 +19,7 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = "";
         audioRef.current = null;
       }
     };
@@ -27,39 +28,64 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
   const toggleAudio = () => {
     try {
       if (!audioRef.current && note.audioUrl) {
-        console.log("Creating new audio with URL:", note.audioUrl); // Debug log
-        audioRef.current = new Audio(note.audioUrl);
+        console.log("Creating new audio with URL:", note.audioUrl);
+
+        // Create new audio element with error handling
+        audioRef.current = new Audio();
+
+        // Add event listeners before setting source
+        audioRef.current.onerror = (e) => {
+          console.error("Audio loading error:", e.target.error);
+          toast.error("Error loading audio file");
+          setIsPlaying(false);
+        };
+
+        audioRef.current.oncanplay = () => {
+          console.log("Audio can play");
+        };
+
         audioRef.current.onended = () => {
           setIsPlaying(false);
-          console.log("Audio playback ended"); // Debug log
+          console.log("Audio playback ended");
         };
-        audioRef.current.onerror = (e) => {
-          console.error("Audio playback error:", e); // Debug log
-          setIsPlaying(false);
-          toast.error("Error playing audio");
-        };
+
+        // Set the source and type
+        audioRef.current.src = note.audioUrl;
+        audioRef.current.type = "audio/webm";
       }
 
       if (isPlaying) {
-        audioRef.current.pause();
+        audioRef.current?.pause();
         setIsPlaying(false);
       } else {
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-              console.log("Audio playing successfully"); // Debug log
-            })
-            .catch((error) => {
-              console.error("Audio playback failed:", error);
-              toast.error("Failed to play audio");
-            });
+        if (audioRef.current) {
+          try {
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  setIsPlaying(true);
+                  console.log("Audio playing successfully");
+                })
+                .catch((error) => {
+                  console.error("Audio playback error:", error);
+                  // Try to reload the audio if it fails
+                  audioRef.current.load();
+                  toast.error("Error playing audio");
+                  setIsPlaying(false);
+                });
+            }
+          } catch (error) {
+            console.error("Play error:", error);
+            toast.error("Could not play audio");
+            setIsPlaying(false);
+          }
         }
       }
     } catch (error) {
       console.error("Toggle audio error:", error);
-      toast.error("Error playing audio");
+      toast.error("Error controlling audio playback");
+      setIsPlaying(false);
     }
   };
 
@@ -82,21 +108,21 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
     const shareData = {
       title: note.title,
       text: note.content,
-      url: window.location.href
+      url: window.location.href,
     };
 
     try {
       if (navigator.share) {
         await navigator.share(shareData);
-        toast.success('Shared successfully');
+        toast.success("Shared successfully");
       } else {
         // Fallback to copy link
         await navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied to clipboard');
+        toast.success("Link copied to clipboard");
       }
     } catch (err) {
-      console.error('Share failed:', err);
-      toast.error('Failed to share');
+      console.error("Share failed:", err);
+      toast.error("Failed to share");
     }
   };
 
@@ -113,15 +139,19 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
       onClick={handleCardClick}
     >
       {/* Creative gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/30 opacity-0 
-                    group-hover:opacity-100 transition-opacity duration-500 mix-blend-overlay"></div>
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-50/30 opacity-0 
+                    group-hover:opacity-100 transition-opacity duration-500 mix-blend-overlay"
+      ></div>
 
       <div className="relative z-10" onClick={(e) => e.stopPropagation()}>
         {/* Header with improved layout */}
         <div className="flex items-start justify-between mb-3">
-          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 
+          <h2
+            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 
                        bg-clip-text text-transparent group-hover:from-blue-600 
-                       group-hover:to-purple-600 transition-all duration-300 flex-1 pr-2">
+                       group-hover:to-purple-600 transition-all duration-300 flex-1 pr-2"
+          >
             {note.title}
           </h2>
           <button
@@ -130,9 +160,11 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
               onToggleFavorite(note._id);
             }}
             className={`shrink-0 transform hover:scale-110 transition-all p-1.5 rounded-full 
-              ${note.favorite 
-                ? 'text-yellow-500 bg-yellow-50/80 hover:bg-yellow-100 shadow-sm' 
-                : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50/80'}`}
+              ${
+                note.favorite
+                  ? "text-yellow-500 bg-yellow-50/80 hover:bg-yellow-100 shadow-sm"
+                  : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50/80"
+              }`}
           >
             <FaStar className="w-3.5 h-3.5" />
           </button>
@@ -140,10 +172,12 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
 
         {/* Content section with better spacing */}
         <div className="space-y-3">
-          <p className="text-sm text-gray-600 leading-relaxed overflow-hidden 
+          <p
+            className="text-sm text-gray-600 leading-relaxed overflow-hidden 
                         display: -webkit-box;
                         -webkit-box-orient: vertical;
-                        -webkit-line-clamp: 2;">
+                        -webkit-line-clamp: 2;"
+          >
             {note.content}
           </p>
 
@@ -156,8 +190,10 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
                 className="w-full h-full object-cover transition-transform duration-700 
                          group-hover/image:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent 
-                           opacity-0 group-hover/image:opacity-100 transition-opacity duration-300"></div>
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent 
+                           opacity-0 group-hover/image:opacity-100 transition-opacity duration-300"
+              ></div>
             </div>
           )}
 
@@ -167,12 +203,17 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
               <button
                 onClick={toggleAudio}
                 className={`p-2 rounded-full transition-all duration-300 transform hover:scale-105
-                  ${isPlaying 
-                    ? 'bg-gradient-to-r from-red-500 to-red-600 animate-pulse' 
-                    : 'bg-gradient-to-r from-green-500 to-green-600'
+                  ${
+                    isPlaying
+                      ? "bg-gradient-to-r from-red-500 to-red-600 animate-pulse"
+                      : "bg-gradient-to-r from-green-500 to-green-600"
                   } text-white shadow-sm hover:shadow-md`}
               >
-                {isPlaying ? <FaPause className="w-3 h-3" /> : <FaPlay className="w-3 h-3" />}
+                {isPlaying ? (
+                  <FaPause className="w-3 h-3" />
+                ) : (
+                  <FaPlay className="w-3 h-3" />
+                )}
               </button>
               <span className="text-xs font-medium text-gray-600">
                 {isPlaying ? "Playing..." : "Play Audio"}
@@ -185,10 +226,10 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
             <span className="text-xs text-gray-400">
               {new Date(note.createdAt).toLocaleDateString(undefined, {
                 month: "short",
-                day: "numeric"
+                day: "numeric",
               })}
             </span>
-            
+
             <div className="flex items-center space-x-1">
               <button
                 onClick={handleShare}

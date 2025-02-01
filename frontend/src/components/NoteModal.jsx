@@ -8,10 +8,10 @@ import FullscreenModal from "./FullscreenModal";
 const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
   const fileInputRef = useRef(null);
   const [isPlayingOldRecording, setIsPlayingOldRecording] = useState(false);
   const oldAudioRef = useRef(null);
@@ -23,12 +23,13 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
-      setImageUrl(note.imageUrl || "");
+      setPreviewUrl(note.imageUrl || "");
       setAudioBlob(note.audioBlob || null);
     } else {
       setTitle("");
       setContent("");
-      setImageUrl("");
+      setPreviewUrl("");
+      setSelectedImage(null);
       setAudioBlob(null);
     }
   }, [note]);
@@ -56,12 +57,21 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Please select a valid image file (JPEG, PNG, or GIF)");
+        return;
+      }
+
+      // Validate file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         toast.error("Image size should be less than 5MB");
         return;
       }
+
       setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -78,24 +88,42 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
       const formData = new FormData();
       formData.append("title", title.trim());
       formData.append("content", content.trim());
-      if (imageUrl) formData.append("imageUrl", imageUrl.trim());
-      if (selectedImage) formData.append("image", selectedImage);
-      if (audioBlob) formData.append("audio", audioBlob, "recording.wav");
+      formData.append("transcription", transcription || "");
+      
+      if (selectedImage) {
+        formData.append("image", selectedImage);
+      }
+      
+      if (audioBlob) {
+        // Log the audio blob details
+        console.log('Audio blob:', {
+          size: audioBlob.size,
+          type: audioBlob.type
+        });
 
-      console.log(
-        "Form data being sent:",
-        Object.fromEntries(formData.entries())
-      ); // Debug log
-      await onSubmit(formData);
+        // Create a new File with proper MIME type
+        const audioFile = new File([audioBlob], 'recording.webm', {
+          type: 'audio/webm',
+          lastModified: Date.now()
+        });
+        formData.append("audio", audioFile);
+      }
 
-      // Reset form
-      setTitle("");
-      setContent("");
-      setImageUrl("");
-      setAudioBlob(null);
-      setSelectedImage(null);
+      // Log the FormData contents
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value instanceof File ? `File(${value.name}, ${value.type})` : value);
+      }
+
+      const result = await onSubmit(formData);
+      console.log('Submit result:', result);
+
+      if (result) {
+        toast.success(note ? 'Note updated successfully' : 'Note created successfully');
+        onClose();
+      }
     } catch (error) {
-      toast.error(error.message);
+      console.error('Error saving note:', error);
+      toast.error(error.message || "Failed to save note");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,21 +132,45 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
   const toggleOldRecording = () => {
     if (!oldAudioRef.current && note?.audioUrl) {
       oldAudioRef.current = new Audio(note.audioUrl);
-      oldAudioRef.current.onended = () => setIsPlayingOldRecording(false);
+      
+      // Add error handling for audio loading
+      oldAudioRef.current.onerror = (e) => {
+        console.error('Audio loading error:', e);
+        toast.error('Error loading audio file');
+        setIsPlayingOldRecording(false);
+      };
+
+      oldAudioRef.current.onended = () => {
+        setIsPlayingOldRecording(false);
+      };
+
       oldAudioRef.current.onloadedmetadata = () => {
         setOldAudioDuration(oldAudioRef.current.duration);
       };
+
       oldAudioRef.current.ontimeupdate = () => {
         setOldAudioCurrentTime(oldAudioRef.current.currentTime);
       };
     }
 
-    if (isPlayingOldRecording) {
-      oldAudioRef.current?.pause();
-    } else {
-      oldAudioRef.current?.play();
+    try {
+      if (isPlayingOldRecording) {
+        oldAudioRef.current?.pause();
+        setIsPlayingOldRecording(false);
+      } else {
+        const playPromise = oldAudioRef.current?.play();
+        if (playPromise) {
+          playPromise.catch((error) => {
+            console.error('Audio playback error:', error);
+            toast.error('Error playing audio');
+          });
+        }
+        setIsPlayingOldRecording(true);
+      }
+    } catch (error) {
+      console.error('Audio toggle error:', error);
+      toast.error('Error controlling audio playback');
     }
-    setIsPlayingOldRecording(!isPlayingOldRecording);
   };
 
   const handleDownloadAudio = async (e) => {
@@ -139,6 +191,12 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
       console.error('Download failed:', error);
       toast.error('Failed to download audio');
     }
+  };
+
+  const handleRecordingComplete = (blob, transcript) => {
+    console.log('Recording completed:', blob); // Debug log
+    setAudioBlob(blob);
+    setTranscription(transcript);
   };
 
   if (!isOpen) return null;
@@ -195,49 +253,44 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
             <div className="space-y-4">
               {/* Media Section */}
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                {/* Image Upload */}
+                {/* Image Upload Section */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Image</label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="url"
-                      placeholder="Image URL"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-lg border text-sm"
-                    />
-                    <span className="text-gray-400">or</span>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageSelect}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3 py-2 bg-gray-100 text-sm rounded-lg hover:bg-gray-200"
-                    >
-                      Upload
-                    </button>
-                  </div>
-                  {selectedImage && (
-                    <div className="relative mt-2">
-                      <img
-                        src={URL.createObjectURL(selectedImage)}
-                        alt="Preview"
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setSelectedImage(null)}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
-                      >
-                        <FaTimes size={12} />
-                      </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-center w-full">
+                      <label className="w-full flex flex-col items-center justify-center px-4 py-6 bg-white text-gray-500 rounded-lg shadow-lg tracking-wide border border-blue-100 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300">
+                        <svg className="w-8 h-8 text-blue-500" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.c-74-.12-1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+                        </svg>
+                        <span className="mt-2 text-sm">Select an image</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                        />
+                      </label>
                     </div>
-                  )}
+                    {previewUrl && (
+                      <div className="relative">
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedImage(null);
+                            setPreviewUrl("");
+                          }}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <FaTimes size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Audio Section with Transcription */}
@@ -294,10 +347,7 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
                     </div>
                   )}
                   <Recorder 
-                    onRecordingComplete={(blob, transcript) => {
-                      setAudioBlob(blob);
-                      setTranscription(transcript);
-                    }} 
+                    onRecordingComplete={handleRecordingComplete} 
                   />
                 </div>              </div>
             </div>

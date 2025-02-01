@@ -8,6 +8,7 @@ const noteSchema = new mongoose.Schema({
   favorite: { type: Boolean, default: false },
   imageUrl: String,
   audioUrl: String,
+  transcription: String, // Add this field
 });
 
 export default mongoose.model("Note", noteSchema);

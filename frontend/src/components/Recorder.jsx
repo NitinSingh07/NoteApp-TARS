@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { FaMicrophone, FaStop, FaPlay, FaPause } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const Recorder = ({ onRecordingComplete }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -14,7 +15,9 @@ const Recorder = ({ onRecordingComplete }) => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      const options = { mimeType: 'audio/webm' };
+      
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
       audioChunksRef.current = [];
 
       // Initialize speech recognition
@@ -36,21 +39,37 @@ const Recorder = ({ onRecordingComplete }) => {
       }
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorderRef.current.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/wav",
+          type: 'audio/webm'
         });
+        
+        console.log('Recording completed:', {
+          size: audioBlob.size,
+          type: audioBlob.type
+        });
+
         setAudioBlob(audioBlob);
         onRecordingComplete(audioBlob, transcript);
         if (recognitionRef.current) {
           recognitionRef.current.stop();
         }
+
+        // Create an object URL for preview
+        const audioUrl = URL.createObjectURL(audioBlob);
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.src = audioUrl;
+        } else {
+          audioPlayerRef.current = new Audio(audioUrl);
+        }
       };
 
-      mediaRecorderRef.current.start();
+      mediaRecorderRef.current.start(100);
       setIsRecording(true);
 
       // Stop recording after 1 minute
@@ -61,6 +80,7 @@ const Recorder = ({ onRecordingComplete }) => {
       }, 60000);
     } catch (error) {
       console.error("Error accessing microphone:", error);
+      toast.error("Could not access microphone");
     }
   };
 
@@ -75,6 +95,22 @@ const Recorder = ({ onRecordingComplete }) => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
     }
+  };
+
+  const handleStopRecording = () => {
+    mediaRecorder.current.stop();
+    mediaRecorder.current.onstop = async () => {
+      const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
+      console.log('Created audio blob:', audioBlob); // Debug log
+      
+      // Ensure the blob is valid
+      if (audioBlob.size > 0) {
+        onRecordingComplete(audioBlob, transcript);
+      } else {
+        console.error('Empty audio blob created');
+        toast.error('Failed to create recording');
+      }
+    };
   };
 
   const togglePlayback = () => {
