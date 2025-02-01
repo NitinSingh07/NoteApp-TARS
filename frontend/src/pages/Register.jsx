@@ -22,7 +22,11 @@ const Register = () => {
           password,
         }
       );
-      await register(response.data.token);
+      
+      // Store email in localStorage and pass to register function
+      localStorage.setItem("userEmail", email);
+      await register(response.data.token, email);
+      
       toast.success("Registration successful!");
       navigate("/");
     } catch (error) {

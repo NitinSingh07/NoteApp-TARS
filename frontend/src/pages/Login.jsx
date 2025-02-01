@@ -22,12 +22,31 @@ const Login = () => {
           password,
         }
       );
-      login(response.data.token);
+
+      console.log("Login Response:", response.data);
+
+      if (!response.data.token) {
+        throw new Error('No token received from server');
+      }
+
+      // Store email and token
+      localStorage.setItem("userEmail", email);
+      login(response.data.token, email);
+
       toast.success("Login successful!");
       navigate("/");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Login failed");
-    } finally {
+      console.error("Login Error Details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      const errorMessage = error.response?.data?.message 
+        || error.message 
+        || "Login failed. Please try again.";
+      
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
@@ -35,7 +54,9 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
       <div className="max-w-md w-full p-8 bg-white/90 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)]">
-        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Welcome Back</h2>
+        <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
+          Welcome Back
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <input
@@ -67,7 +88,10 @@ const Login = () => {
         </form>
         <p className="mt-6 text-center text-gray-600">
           Don't have an account?{" "}
-          <Link to="/register" className="text-purple-500 hover:text-blue-500 transition-colors duration-300 font-medium">
+          <Link
+            to="/register"
+            className="text-purple-500 hover:text-blue-500 transition-colors duration-300 font-medium"
+          >
             Register
           </Link>
         </p>
