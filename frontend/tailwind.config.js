@@ -6,27 +6,18 @@ export default {
   ],
   theme: {
     extend: {
-      animation: {
-        fadeIn: 'fadeIn 0.5s ease-out',
-        slideIn: 'slideIn 0.5s ease-out',
-        slideUp: 'slideUp 0.5s ease-out',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideIn: {
-          '0%': { transform: 'translateY(-20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-      },
+      // ...existing animations and other extensions...
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.perspective-1000': {
+          perspective: '1000px',
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 }
 
