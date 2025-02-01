@@ -6,7 +6,7 @@ import SearchBar from "../components/Search";
 import NoteModal from "../components/NoteModal";
 import { toast } from 'react-toastify';
 
-const Notes = () => {
+const Notes = ({ showFavoritesOnly = false }) => {
   const [notes, setNotes] = useState([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,17 +83,27 @@ const Notes = () => {
     }
   };
 
-  const filteredNotes = notes.filter(
-    (note) => 
+  const filteredNotes = notes
+    .filter(note => 
+      !showFavoritesOnly || note.favorite
+    )
+    .filter(note => 
       note.title?.toLowerCase().includes(search.toLowerCase()) || 
       note.content?.toLowerCase().includes(search.toLowerCase())
-  );
+    );
 
   return (
     <div className="min-h-screen bg-gradient-conic from-white via-blue-50 to-gray-50">
-      <Navbar />
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-800">
+              {showFavoritesOnly ? 'Favorite Notes' : 'All Notes'}
+            </h1>
+            <span className="text-sm text-gray-500">
+              {filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'}
+            </span>
+          </div>
           <SearchBar 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
