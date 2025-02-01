@@ -86,22 +86,21 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
+      
+      // Add basic fields
       formData.append("title", title.trim());
       formData.append("content", content.trim());
       formData.append("transcription", transcription || "");
-      
+
+      // Handle image file
       if (selectedImage) {
+        console.log('Appending image:', selectedImage.name, selectedImage.type);
         formData.append("image", selectedImage);
       }
       
+      // Handle audio file
       if (audioBlob) {
-        // Log the audio blob details
-        console.log('Audio blob:', {
-          size: audioBlob.size,
-          type: audioBlob.type
-        });
-
-        // Create a new File with proper MIME type
+        console.log('Appending audio blob:', audioBlob.size, audioBlob.type);
         const audioFile = new File([audioBlob], 'recording.webm', {
           type: 'audio/webm',
           lastModified: Date.now()
@@ -109,9 +108,9 @@ const NoteModal = ({ isOpen, onClose, onSubmit, note, onToggleFavorite }) => {
         formData.append("audio", audioFile);
       }
 
-      // Log the FormData contents
+      // Debug log the FormData contents
       for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value instanceof File ? `File(${value.name}, ${value.type})` : value);
+        console.log('FormData entry:', key, value instanceof File ? `File: ${value.name}` : value);
       }
 
       const result = await onSubmit(formData);

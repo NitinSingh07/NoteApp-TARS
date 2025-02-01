@@ -4,99 +4,67 @@ import { mkdir } from "fs/promises";
 
 export const createNote = async (req, res) => {
   try {
-    console.log("Files received:", req.files);
-    console.log("Body received:", req.body);
+    console.log('Request files:', req.files);
+    console.log('Request body:', req.body);
 
     const { title, content, transcription } = req.body;
     let imageUrl = "";
     let audioUrl = "";
 
-    // Ensure upload directories exist
-    await mkdir(path.join("public", "uploads", "images"), { recursive: true });
-    await mkdir(path.join("public", "uploads", "audio"), { recursive: true });
+    // Ensure directories exist
+    await mkdir(path.join('public', 'uploads', 'images'), { recursive: true });
+    await mkdir(path.join('public', 'uploads', 'audio'), { recursive: true });
 
     // Handle image upload
-    if (req.files?.image) {
+    if (req.files && req.files.image) {
       const imageFile = req.files.image;
-      console.log("Processing image:", imageFile.name, imageFile.mimetype);
+      console.log('Processing image:', imageFile.name, imageFile.mimetype);
 
-      const allowedImageTypes = ["image/jpeg", "image/png", "image/gif"];
+      const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
       if (!allowedImageTypes.includes(imageFile.mimetype)) {
-        throw new Error(
-          "Invalid image type. Only JPEG, PNG and GIF are allowed."
-        );
+        throw new Error('Invalid image type. Only JPEG, PNG and GIF are allowed.');
       }
 
-      const imageFilename = `${Date.now()}-${imageFile.name.replace(
-        /\s+/g,
-        "-"
-      )}`;
-      const imageUploadPath = path.join(
-        "public",
-        "uploads",
-        "images",
-        imageFilename
-      );
-
+      const imageFilename = `${Date.now()}-${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+      const imageUploadPath = path.join('public', 'uploads', 'images', imageFilename);
+      
       await imageFile.mv(imageUploadPath);
-      imageUrl = `${req.protocol}://${req.get(
-        "host"
-      )}/uploads/images/${imageFilename}`;
-      console.log("Image saved at:", imageUrl);
+      imageUrl = `${req.protocol}://${req.get('host')}/uploads/images/${imageFilename}`;
+      console.log('Image saved:', imageUrl);
     }
 
     // Handle audio upload
-    if (req.files?.audio) {
+    if (req.files && req.files.audio) {
       const audioFile = req.files.audio;
-      console.log("Processing audio:", audioFile.name, audioFile.mimetype);
+      console.log('Processing audio:', audioFile.name, audioFile.mimetype);
 
-      // Support multiple audio formats
-      const allowedAudioTypes = [
-        "audio/webm",
-        "audio/webm;codecs=opus",
-        "audio/wav",
-        "audio/mpeg",
-      ];
-
-      if (
-        !allowedAudioTypes.some((type) => audioFile.mimetype.startsWith(type))
-      ) {
-        throw new Error(
-          "Invalid audio type. Supported formats: WebM, WAV, MP3"
-        );
+      const allowedAudioTypes = ['audio/webm', 'audio/webm;codecs=opus'];
+      if (!allowedAudioTypes.some(type => audioFile.mimetype.startsWith(type))) {
+        throw new Error('Invalid audio type. Only WebM audio is allowed.');
       }
 
-      const audioFilename = `${Date.now()}-${audioFile.name.replace(
-        /\s+/g,
-        "-"
-      )}`;
-      const audioUploadPath = path.join(
-        "public",
-        "uploads",
-        "audio",
-        audioFilename
-      );
-
+      const audioFilename = `${Date.now()}-${audioFile.name.replace(/[^a-zA-Z0-9.]/g, '-')}`;
+      const audioUploadPath = path.join('public', 'uploads', 'audio', audioFilename);
+      
       await audioFile.mv(audioUploadPath);
-      audioUrl = `${req.protocol}://${req.get(
-        "host"
-      )}/uploads/audio/${audioFilename}`;
-      console.log("Audio saved at:", audioUrl);
+      audioUrl = `${req.protocol}://${req.get('host')}/uploads/audio/${audioFilename}`;
+      console.log('Audio saved:', audioUrl);
     }
 
+    // Create note with all media
     const note = await Note.create({
       userId: req.user.id,
       title,
       content,
       imageUrl,
       audioUrl,
-      transcription: transcription || "",
+      transcription: transcription || ""
     });
 
-    console.log("Created note:", note);
+    console.log('Created note:', note);
     res.status(201).json(note);
   } catch (error) {
-    console.error("Error creating note:", error);
+    console.error('Error creating note:', error);
     res.status(400).json({ message: error.message });
   }
 };

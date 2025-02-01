@@ -36,6 +36,8 @@ app.use(
     debug: true,
     safeFileNames: true,
     preserveExtension: true,
+    uploadTimeout: 60000, // 60 seconds timeout
+    parseNested: true, // Important for handling multiple files
   })
 );
 
