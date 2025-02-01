@@ -139,8 +139,9 @@ const Notes = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
           {filteredNotes.map((note, index) => (
-            <div key={note._id} 
-              className="animate-slideUp"
+            <div 
+              key={note._id} 
+              className="animate-slideUp hover:scale-[1.02] transition-transform duration-200"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <NoteCard
