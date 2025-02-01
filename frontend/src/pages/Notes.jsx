@@ -90,9 +90,9 @@ const Notes = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="min-h-screen bg-gradient-conic from-white via-blue-50 to-gray-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
           <SearchBar 
             value={search}
@@ -137,12 +137,15 @@ const Notes = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
           {filteredNotes.map((note, index) => (
             <div 
               key={note._id} 
-              className="animate-slideUp hover:scale-[1.02] transition-transform duration-200"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className="animate-slideUp"
+              style={{ 
+                animationDelay: `${index * 0.1}s`,
+                animationFillMode: 'backwards'
+              }}
             >
               <NoteCard
                 note={note}

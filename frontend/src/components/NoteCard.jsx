@@ -82,60 +82,68 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
 
   return (
     <div
-      className="group p-6 bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-100 relative overflow-hidden cursor-pointer"
+      className="group relative p-6 bg-white/90 backdrop-blur-sm rounded-xl transition-all duration-300 
+                 hover:shadow-glass border border-gray-100 hover:border-blue-200/50 
+                 hover:-translate-y-1 cursor-pointer overflow-hidden"
       onClick={handleCardClick}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
       <div className="relative" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-start mb-3">
-          <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+        {/* Header section */}
+        <div className="flex flex-col space-y-2 mb-4">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
             {note.title}
           </h2>
-
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md">
-            {new Date(note.createdAt).toLocaleDateString(undefined, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite(note._id);
-            }}
-            className={`transform hover:scale-110 transition-transform p-1.5 rounded-full ${
-              note.favorite
-                ? "text-yellow-500 bg-yellow-50 hover:bg-yellow-100"
-                : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
-            }`}
-          >
-            <FaStar className="w-4 h-4" />
-          </button>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 bg-gray-100/80 px-2 py-1 rounded-md">
+              {new Date(note.createdAt).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(note._id);
+              }}
+              className={`transform hover:scale-110 transition-transform p-1.5 rounded-full 
+                ${note.favorite 
+                  ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100 shadow-md' 
+                  : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'
+                }`}
+            >
+              <FaStar className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3">
+        <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3 group-hover:text-gray-700">
           {note.content}
         </p>
 
         {note.imageUrl && (
-          <img
-            src={note.imageUrl}
-            alt="Note attachment"
-            className="w-full h-48 object-cover rounded-lg mb-4 shadow-md hover:shadow-lg transition-shadow"
-          />
+          <div className="relative overflow-hidden rounded-lg mb-4 group/image">
+            <img
+              src={note.imageUrl}
+              alt="Note attachment"
+              className="w-full h-48 object-cover transition-transform duration-700 group-hover/image:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-300"></div>
+          </div>
         )}
 
         {note.audioUrl && (
-          <div className="mt-3 flex items-center space-x-3 bg-gray-50 p-3 rounded-lg">
+          <div className="mt-3 flex items-center space-x-3 bg-gradient-to-r from-gray-50 to-gray-100/50 p-4 rounded-lg">
             <button
               onClick={toggleAudio}
-              className={`p-2.5 rounded-full transition-all duration-300 ${
-                isPlaying
-                  ? "bg-red-500 hover:bg-red-600 scale-105"
-                  : "bg-green-500 hover:bg-green-600"
-              } text-white shadow-lg hover:shadow-xl transform hover:scale-105`}
+              className={`p-3 rounded-full transition-all duration-300 transform hover:scale-105
+                ${isPlaying 
+                  ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse' 
+                  : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                } text-white shadow-lg hover:shadow-xl`}
             >
               {isPlaying ? (
                 <FaPause className="w-4 h-4" />
@@ -153,20 +161,22 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
           </div>
         )}
 
-        <div className="flex space-x-3 mt-4">
+        <div className="flex items-center justify-end space-x-2 mt-4 transition-all duration-300 group-hover:transform group-hover:translate-y-0">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(note);
             }}
-            className="transform hover:scale-110 transition-transform p-1.5 rounded-full text-blue-500 hover:bg-blue-50"
+            className="p-2 rounded-lg bg-blue-50/50 text-blue-500 transition-all duration-300 
+                       hover:scale-105 hover:bg-blue-100 hover:shadow-md"
           >
             <FaEdit className="w-4 h-4" />
           </button>
 
           <button
             onClick={handleCopy}
-            className="transform hover:scale-110 transition-transform p-1.5 rounded-full text-green-500 hover:bg-green-50"
+            className="p-2 rounded-lg bg-green-50/50 text-green-500 transition-all duration-300 
+                       hover:scale-105 hover:bg-green-100 hover:shadow-md"
             title="Copy note"
           >
             <FaCopy className="w-4 h-4" />
@@ -177,7 +187,8 @@ const NoteCard = ({ note, onDelete, onEdit, onToggleFavorite }) => {
               e.stopPropagation();
               onDelete(note._id);
             }}
-            className="transform hover:scale-110 transition-transform p-1.5 rounded-full text-red-500 hover:bg-red-50"
+            className="p-2 rounded-lg bg-red-50/50 text-red-500 transition-all duration-300 
+                       hover:scale-105 hover:bg-red-100 hover:shadow-md"
           >
             <FaTrash className="w-4 h-4" />
           </button>
