@@ -16,7 +16,7 @@ const Register = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
         {
           email,
           password,
@@ -97,7 +97,11 @@ const Register = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
@@ -115,10 +119,21 @@ const Register = () => {
                     placeholder="Enter your email"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none
-                  opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <div
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none
+                  opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg
+                      className="w-5 h-5 text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -126,8 +141,16 @@ const Register = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   Password
                 </label>
@@ -143,10 +166,21 @@ const Register = () => {
                     placeholder="Create a password"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none
-                  opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <div
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none
+                  opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg
+                      className="w-5 h-5 text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -164,9 +198,23 @@ const Register = () => {
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     <span className="relative">
                       <span className="animate-pulse">Creating Account</span>
@@ -175,13 +223,17 @@ const Register = () => {
                       <span className="animate-pulse delay-300">.</span>
                     </span>
                   </span>
-                ) : "Create Account"}
+                ) : (
+                  "Create Account"
+                )}
               </button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-gray-400 relative">
-                <span className="bg-black/20 px-4 relative z-10">Already have an account?</span>
+                <span className="bg-black/20 px-4 relative z-10">
+                  Already have an account?
+                </span>
                 <span className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-gray-400/50 to-transparent top-1/2 -z-1"></span>
               </p>
               <Link
