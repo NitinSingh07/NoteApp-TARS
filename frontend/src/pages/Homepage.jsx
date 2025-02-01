@@ -8,16 +8,13 @@ export default function Homepage() {
   const [activeTab, setActiveTab] = useState("home");
 
   return (
-    <div>
-      <Navbar className="z-10" />
-
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
-        <div className="pl-64">
-          <div className="container mx-auto p-6">
-            <Notes showFavoritesOnly={activeTab === "favorites"} />
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <Navbar />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      <div className="pl-64 pt-16"> {/* Adjusted padding-top */}
+        <div className="p-6">
+          <Notes showFavoritesOnly={activeTab === "favorites"} />
         </div>
       </div>
     </div>
